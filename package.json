@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@oversea/pagination": "^0.0.1",
     "@tanstack/react-table": "^8.21.3",
     "next": "15.3.4",
     "react": "^19.0.0",

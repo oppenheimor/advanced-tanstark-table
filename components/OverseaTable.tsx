@@ -5,6 +5,8 @@ import {
   flexRender,
   ColumnDef,
 } from '@tanstack/react-table';
+// @ts-expect-error no declaration file
+import Pagination from '@oversea/pagination';
 
 export interface OverseaColumnConfig<T = Record<string, unknown>> {
   key: keyof T;
@@ -17,6 +19,14 @@ export interface OverseaColumnConfig<T = Record<string, unknown>> {
   fixed?: 'left' | 'right';
 }
 
+export interface PaginationProps {
+  total?: number;
+  page?: number;
+  siblings?: number;
+  boundaries?: number;
+  onChange?: (page: number) => void;
+}
+
 export interface OverseaTableProps<T = Record<string, unknown>> {
   columns: OverseaColumnConfig<T>[];
   dataSource: T[];
@@ -25,6 +35,8 @@ export interface OverseaTableProps<T = Record<string, unknown>> {
   size?: 'small' | 'middle' | 'large';
   bordered?: boolean;
   className?: string;
+  pagination?: PaginationProps | false;
+  pageSize?: number;
 }
 
 function OverseaTable<T extends Record<string, unknown>>({
@@ -35,7 +47,48 @@ function OverseaTable<T extends Record<string, unknown>>({
   size = 'middle',
   bordered = true,
   className = '',
+  pagination,
+  pageSize = 10,
 }: OverseaTableProps<T>) {
+  const [currentPage, setCurrentPage] = React.useState(
+    pagination !== false ? pagination?.page || 1 : 1
+  );
+  
+  const paginatedData = React.useMemo(() => {
+    if (pagination === false) {
+      return dataSource;
+    }
+    
+    if (pagination && pagination.total !== undefined) {
+      return dataSource;
+    }
+    
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return dataSource.slice(startIndex, endIndex);
+  }, [dataSource, currentPage, pageSize, pagination]);
+  
+  const totalPages = React.useMemo(() => {
+    if (pagination === false) return 0;
+    if (pagination && pagination.total !== undefined) {
+      return pagination.total;
+    }
+    return Math.ceil(dataSource.length / pageSize);
+  }, [dataSource.length, pageSize, pagination]);
+  
+  const handlePageChange = React.useCallback((page: number) => {
+    setCurrentPage(page);
+    if (pagination !== false) {
+      pagination?.onChange?.(page);
+    }
+  }, [pagination]);
+  
+  React.useEffect(() => {
+    if (pagination !== false && pagination?.page !== undefined) {
+      setCurrentPage(pagination.page);
+    }
+  }, [pagination]);
+  
   const tanstackColumns: ColumnDef<T>[] = React.useMemo(() => {
     return columns.map((col) => ({
       id: String(col.key),
@@ -57,7 +110,7 @@ function OverseaTable<T extends Record<string, unknown>>({
   }, [columns]);
 
   const table = useReactTable({
-    data: dataSource,
+    data: paginatedData,
     columns: tanstackColumns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -102,62 +155,82 @@ function OverseaTable<T extends Record<string, unknown>>({
     );
   }
 
+  const renderPagination = () => {
+    if (pagination === false || totalPages <= 1) return null;
+    
+    return (
+      <div className="flex justify-center mt-4">
+        <Pagination
+          total={totalPages}
+          page={currentPage}
+          onChange={handlePageChange}
+          siblings={pagination?.siblings || 1}
+          boundaries={pagination?.boundaries || 1}
+        />
+      </div>
+    );
+  };
+  
   return (
-    <div className={`w-full overflow-x-auto ${className}`}>
-      <table className={`min-w-full bg-white rounded-lg shadow-sm ${
-        bordered ? 'border border-gray-200' : ''
-      }`}>
-        <thead className="bg-gray-50">
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header, index) => {
-                const columnConfig = columns[index];
-                return (
-                  <th
-                    key={header.id}
-                    className={`${getSizeClasses()} font-medium text-gray-500 uppercase tracking-wider ${
-                      bordered ? 'border-b border-gray-200' : ''
-                    } ${getAlignClass(columnConfig?.align)}`}
-                    style={{ width: columnConfig?.width }}
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </th>
-                );
-              })}
-            </tr>
-          ))}
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {table.getRowModel().rows.map((row, rowIndex) => (
-            <tr key={getRowKey(row.original, rowIndex)} className="hover:bg-gray-50">
-              {row.getVisibleCells().map((cell, cellIndex) => {
-                const columnConfig = columns[cellIndex];
-                return (
-                  <td
-                    key={cell.id}
-                    className={`${getSizeClasses()} whitespace-nowrap text-gray-900 ${getAlignClass(
-                      columnConfig?.align
-                    )}`}
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className={`w-full ${className}`}>
+      <div className="overflow-x-auto">
+        <table className={`min-w-full bg-white rounded-lg shadow-sm ${
+          bordered ? 'border border-gray-200' : ''
+        }`}>
+          <thead className="bg-gray-50">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header, index) => {
+                  const columnConfig = columns[index];
+                  return (
+                    <th
+                      key={header.id}
+                      className={`${getSizeClasses()} font-medium text-gray-500 uppercase tracking-wider ${
+                        bordered ? 'border-b border-gray-200' : ''
+                      } ${getAlignClass(columnConfig?.align)}`}
+                      style={{ width: columnConfig?.width }}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </th>
+                  );
+                })}
+              </tr>
+            ))}
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {table.getRowModel().rows.map((row, rowIndex) => (
+              <tr key={getRowKey(row.original, rowIndex)} className="hover:bg-gray-50">
+                {row.getVisibleCells().map((cell, cellIndex) => {
+                  const columnConfig = columns[cellIndex];
+                  return (
+                    <td
+                      key={cell.id}
+                      className={`${getSizeClasses()} whitespace-nowrap text-gray-900 ${getAlignClass(
+                        columnConfig?.align
+                      )}`}
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        
+        {paginatedData.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            暂无数据
+          </div>
+        )}
+      </div>
       
-      {dataSource.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
-          暂无数据
-        </div>
-      )}
+      {renderPagination()}
     </div>
   );
 }
