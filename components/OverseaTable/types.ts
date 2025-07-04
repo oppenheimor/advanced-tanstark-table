@@ -14,6 +14,7 @@ export interface OverseaColumnConfig<T = Record<string, unknown>> {
 export interface PaginationProps {
   total?: number;
   page?: number;
+  pageSize?: number;
   siblings?: number;
   boundaries?: number;
   onChange?: (page: number) => void;
@@ -28,7 +29,7 @@ export interface OverseaTableProps<T = Record<string, unknown>> {
   bordered?: boolean;
   className?: string;
   pagination?: PaginationProps | false;
-  pageSize?: number;
+  pageSize?: number; // Deprecated: use pagination.pageSize instead
 }
 
 export type TableSize = 'small' | 'middle' | 'large';

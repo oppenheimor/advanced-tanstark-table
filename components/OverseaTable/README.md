@@ -72,6 +72,7 @@ function MyComponent() {
       rowKey="id"
       pagination={{
         page: 1,
+        pageSize: 10,
         onChange: (page) => console.log('Page changed:', page),
       }}
     />
@@ -93,7 +94,7 @@ function MyComponent() {
 | `bordered` | `boolean` | `true` | Show table borders |
 | `className` | `string` | `''` | Additional CSS classes |
 | `pagination` | `PaginationProps \| false` | - | Pagination configuration |
-| `pageSize` | `number` | `10` | Number of items per page |
+| `pageSize` | `number` | `10` | **Deprecated**: Use `pagination.pageSize` instead |
 
 ### OverseaColumnConfig
 
@@ -114,6 +115,7 @@ function MyComponent() {
 |------|------|---------|-------------|
 | `total` | `number` | - | Total number of items |
 | `page` | `number` | `1` | Current page number |
+| `pageSize` | `number` | `10` | Number of items per page |
 | `siblings` | `number` | `1` | Number of sibling pages |
 | `boundaries` | `number` | `1` | Number of boundary pages |
 | `onChange` | `(page: number) => void` | - | Page change callback |
@@ -178,6 +180,7 @@ const [total, setTotal] = useState(0);
   pagination={{
     page: currentPage,
     total: total,
+    pageSize: 20,
     onChange: (page) => {
       setCurrentPage(page);
       // Fetch data for new page

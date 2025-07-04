@@ -297,9 +297,11 @@ export default function Home() {
             bordered={true}
             pageSize={10}
             pagination={paginationMode === 'frontend' ? {
+              pageSize: 10,
               siblings: 1,
               boundaries: 1,
             } : {
+              pageSize: backendPageSize,
               page: backendPage,
               total: Math.ceil(stockMockData.length / backendPageSize),
               siblings: 1,

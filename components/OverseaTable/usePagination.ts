@@ -4,14 +4,18 @@ import { PaginationProps } from './types';
 interface UsePaginationProps<T> {
   dataSource: T[];
   pagination?: PaginationProps | false;
-  pageSize: number;
+  pageSize?: number; // Deprecated fallback
 }
 
 export function usePagination<T>({
   dataSource,
   pagination,
-  pageSize,
+  pageSize: deprecatedPageSize,
 }: UsePaginationProps<T>) {
+  // Determine the actual pageSize to use
+  const actualPageSize = pagination !== false && pagination?.pageSize 
+    ? pagination.pageSize 
+    : deprecatedPageSize || 10;
   const [currentPage, setCurrentPage] = React.useState(
     pagination !== false ? pagination?.page || 1 : 1
   );
@@ -25,18 +29,18 @@ export function usePagination<T>({
       return dataSource;
     }
 
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
+    const startIndex = (currentPage - 1) * actualPageSize;
+    const endIndex = startIndex + actualPageSize;
     return dataSource.slice(startIndex, endIndex);
-  }, [dataSource, currentPage, pageSize, pagination]);
+  }, [dataSource, currentPage, actualPageSize, pagination]);
 
   const totalPages = React.useMemo(() => {
     if (pagination === false) return 0;
     if (pagination && pagination.total !== undefined) {
       return pagination.total;
     }
-    return Math.ceil(dataSource.length / pageSize);
-  }, [dataSource.length, pageSize, pagination]);
+    return Math.ceil(dataSource.length / actualPageSize);
+  }, [dataSource.length, actualPageSize, pagination]);
 
   const handlePageChange = React.useCallback(
     (page: number) => {
@@ -59,5 +63,6 @@ export function usePagination<T>({
     paginatedData,
     totalPages,
     handlePageChange,
+    pageSize: actualPageSize,
   };
 }
