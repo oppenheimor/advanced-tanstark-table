@@ -1,6 +1,6 @@
 import React from "react";
 import { Geist, Geist_Mono } from "next/font/google";
-import OverseaTable, { OverseaColumnConfig } from "@/components/OverseaTable";
+import { OverseaTable, OverseaColumnConfig } from "@/components/OverseaTable/index";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,6 +28,12 @@ interface StockData extends Record<string, unknown> {
   analystRating: 'Strong buy' | 'Buy' | 'Hold' | 'Sell' | 'Strong sell';
 }
 
+// Simple seeded random number generator for deterministic results
+const seededRandom = (seed: number) => {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+};
+
 const generateStockData = (count: number): StockData[] => {
   const symbols = ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'TSLA', 'META', 'NFLX', 'NVDA', 'ORCL', 'CRM', 'ADBE', 'INTC', 'AMD', 'PYPL', 'UBER', 'LYFT', 'SPOT', 'ZOOM', 'TWTR', 'SNAP', 'PINS', 'SQ', 'SHOP', 'ROKU', 'DKNG', 'PLTR', 'RBLX', 'COIN', 'HOOD', 'DOCU', 'ZM', 'WORK', 'OKTA', 'SNOW', 'CRWD', 'NET', 'DDOG', 'MDB', 'TEAM', 'ATLASSIAN', 'SPLK', 'VEEV', 'WDAY', 'PANW', 'FTNT', 'CYBR', 'CSCO', 'IBM', 'HPQ', 'DELL'];
   const companies = ['Apple Inc.', 'Alphabet Inc.', 'Microsoft Corporation', 'Amazon.com Inc.', 'Tesla Inc.', 'Meta Platforms Inc.', 'Netflix Inc.', 'NVIDIA Corporation', 'Oracle Corporation', 'Salesforce Inc.', 'Adobe Inc.', 'Intel Corporation', 'Advanced Micro Devices', 'PayPal Holdings', 'Uber Technologies', 'Lyft Inc.', 'Spotify Technology', 'Zoom Video Communications', 'Twitter Inc.', 'Snap Inc.', 'Pinterest Inc.', 'Block Inc.', 'Shopify Inc.', 'Roku Inc.', 'DraftKings Inc.', 'Palantir Technologies', 'Roblox Corporation', 'Coinbase Global', 'Robinhood Markets', 'DocuSign Inc.', 'Zoom Video Communications', 'Slack Technologies', 'Okta Inc.', 'Snowflake Inc.', 'CrowdStrike Holdings', 'Cloudflare Inc.', 'Datadog Inc.', 'MongoDB Inc.', 'Atlassian Corporation', 'Atlassian Corporation', 'Splunk Inc.', 'Veeva Systems', 'Workday Inc.', 'Palo Alto Networks', 'Fortinet Inc.', 'CyberArk Software', 'Cisco Systems', 'IBM Corporation', 'HP Inc.', 'Dell Technologies'];
@@ -35,14 +41,16 @@ const generateStockData = (count: number): StockData[] => {
   const ratings: StockData['analystRating'][] = ['Strong buy', 'Buy', 'Hold', 'Sell', 'Strong sell'];
   
   return Array.from({ length: count }, (_, i) => {
-    const randomPrice = Math.random() * 500 + 10;
-    const randomChange = (Math.random() - 0.5) * 20;
-    const randomVolume = Math.random() * 100 + 1;
-    const randomPE = Math.random() * 50 + 5;
-    const randomEPS = Math.random() * 10 + 0.5;
-    const randomGrowth = (Math.random() - 0.5) * 50;
-    const randomDividend = Math.random() * 5;
-    const randomMarketCap = Math.random() * 10 + 0.1;
+    // Use seeded random for deterministic results
+    const randomPrice = seededRandom(i * 7 + 1) * 500 + 10;
+    const randomChange = (seededRandom(i * 7 + 2) - 0.5) * 20;
+    const randomVolume = seededRandom(i * 7 + 3) * 100 + 1;
+    const randomPE = seededRandom(i * 7 + 4) * 50 + 5;
+    const randomEPS = seededRandom(i * 7 + 5) * 10 + 0.5;
+    const randomGrowth = (seededRandom(i * 7 + 6) - 0.5) * 50;
+    const randomDividend = seededRandom(i * 7 + 7) * 5;
+    const randomMarketCap = seededRandom(i * 7 + 8) * 10 + 0.1;
+    const randomRelVolume = seededRandom(i * 7 + 9) * 3 + 0.1;
     
     return {
       symbol: symbols[i % symbols.length] + (i >= symbols.length ? Math.floor(i / symbols.length) : ''),
@@ -50,7 +58,7 @@ const generateStockData = (count: number): StockData[] => {
       price: parseFloat(randomPrice.toFixed(2)),
       changePercent: parseFloat(randomChange.toFixed(2)),
       volume: parseFloat(randomVolume.toFixed(2)),
-      relVolume: parseFloat((Math.random() * 3 + 0.1).toFixed(2)),
+      relVolume: parseFloat(randomRelVolume.toFixed(2)),
       marketCap: parseFloat(randomMarketCap.toFixed(2)),
       pe: parseFloat(randomPE.toFixed(2)),
       epsDiluted: parseFloat(randomEPS.toFixed(2)),
@@ -287,7 +295,6 @@ export default function Home() {
             rowKey="symbol"
             size="small"
             bordered={true}
-            className="stock-screener-table"
             pageSize={10}
             pagination={paginationMode === 'frontend' ? {
               siblings: 1,
