@@ -232,6 +232,7 @@ const stockColumns: OverseaColumnConfig<StockData>[] = [
 export default function Home() {
   const [paginationMode, setPaginationMode] = React.useState<'frontend' | 'backend'>('frontend');
   const [backendPage, setBackendPage] = React.useState(1);
+  const [loading, setLoading] = React.useState(false);
   const backendPageSize = 10;
   
   const mockBackendData = React.useMemo(() => {
@@ -240,8 +241,11 @@ export default function Home() {
     return stockMockData.slice(startIndex, endIndex);
   }, [backendPage, backendPageSize]);
   
-  const handleBackendPaginationChange = (page: number) => {
+  const handleBackendPaginationChange = async (page: number) => {
+    setLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 800));
     setBackendPage(page);
+    setLoading(false);
   };
   
   return (
@@ -266,21 +270,27 @@ export default function Home() {
             <div className="flex gap-4 items-center text-sm text-gray-500">
               <div className="flex gap-2">
                 <button
-                  onClick={() => setPaginationMode('frontend')}
-                  className={`px-3 py-1 rounded-md ${
+                  onClick={() => {
+                    setPaginationMode('frontend');
+                    setBackendPage(1);
+                  }}
+                  className={`px-3 py-1 rounded-md transition-colors ${
                     paginationMode === 'frontend' 
                       ? 'bg-blue-100 text-blue-600' 
-                      : 'bg-gray-100 text-gray-600'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
                   前端分页
                 </button>
                 <button
-                  onClick={() => setPaginationMode('backend')}
-                  className={`px-3 py-1 rounded-md ${
+                  onClick={() => {
+                    setPaginationMode('backend');
+                    setBackendPage(1);
+                  }}
+                  className={`px-3 py-1 rounded-md transition-colors ${
                     paginationMode === 'backend' 
                       ? 'bg-blue-100 text-blue-600' 
-                      : 'bg-gray-100 text-gray-600'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
                   后端分页
@@ -289,30 +299,43 @@ export default function Home() {
             </div>
           </div>
           
-          <OverseaTable<StockData>
-            columns={stockColumns}
-            dataSource={paginationMode === 'frontend' ? stockMockData : mockBackendData}
-            rowKey="symbol"
-            size="small"
-            bordered={true}
-            pageSize={10}
-            pagination={paginationMode === 'frontend' ? {
-              pageSize: 10,
-              siblings: 1,
-              boundaries: 1,
-            } : {
-              pageSize: backendPageSize,
-              page: backendPage,
-              total: Math.ceil(stockMockData.length / backendPageSize),
-              siblings: 1,
-              boundaries: 1,
-              onChange: handleBackendPaginationChange,
-            }}
-          />
+          <div className="relative">
+            {loading && (
+              <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-blue-600"></div>
+                  <span className="text-sm">加载中...</span>
+                </div>
+              </div>
+            )}
+            <OverseaTable<StockData>
+              columns={stockColumns}
+              dataSource={paginationMode === 'frontend' ? stockMockData : mockBackendData}
+              rowKey="symbol"
+              size="small"
+              bordered={true}
+              pageSize={10}
+              pagination={paginationMode === 'frontend' ? {
+                pageSize: 10,
+                siblings: 1,
+                boundaries: 1,
+              } : {
+                pageSize: backendPageSize,
+                page: backendPage,
+                total: Math.ceil(stockMockData.length / backendPageSize),
+                siblings: 1,
+                boundaries: 1,
+                onChange: handleBackendPaginationChange,
+              }}
+            />
+          </div>
           
           <div className="mt-4 text-xs text-gray-500 flex justify-between">
             <span>Data provided for demonstration purposes</span>
-            <span>{stockMockData.length} stocks total ({paginationMode === 'frontend' ? '前端分页' : '后端分页'})</span>
+            <span>
+              {stockMockData.length} stocks total ({paginationMode === 'frontend' ? '前端分页' : '后端分页'})
+              {paginationMode === 'backend' && loading && <span className="ml-2 text-blue-600">· 正在加载...</span>}
+            </span>
           </div>
         </div>
       </main>

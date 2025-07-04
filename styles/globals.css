@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "../node_modules/@oversea/pagination";
 
 :root {
   --background: #ffffff;
@@ -8,8 +9,10 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-oversea-primary: #f00;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-text-primary: #000;
 }
 
 @media (prefers-color-scheme: dark) {
