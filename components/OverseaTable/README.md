@@ -5,6 +5,7 @@ A powerful and flexible table component built with React and TanStack Table, des
 ## Features
 
 - **Flexible Column Configuration**: Support for custom rendering, alignment, and sizing
+- **Advanced Sorting**: Support for both default and loop sorting modes with customizable behavior
 - **Built-in Pagination**: Configurable pagination with customizable controls
 - **Loading States**: Built-in loading spinner and empty state handling
 - **Responsive Design**: Mobile-friendly with horizontal scrolling
@@ -47,6 +48,8 @@ const columns: OverseaColumnConfig<User>[] = [
     title: 'Status',
     width: 120,
     align: 'center',
+    sorter: true,
+    sortCycle: 'loop',
     render: (value, record) => (
       <span className={`px-2 py-1 rounded-full text-xs ${
         record.status === 'active' 
@@ -65,11 +68,15 @@ const data: User[] = [
 ];
 
 function MyComponent() {
+  const [sortConfig, setSortConfig] = useState(null);
+  
   return (
     <OverseaTable
       columns={columns}
       dataSource={data}
       rowKey="id"
+      sortConfig={sortConfig}
+      onSortChange={setSortConfig}
       pagination={{
         page: 1,
         pageSize: 10,
@@ -95,6 +102,8 @@ function MyComponent() {
 | `className` | `string` | `''` | Additional CSS classes |
 | `pagination` | `PaginationProps \| false` | - | Pagination configuration |
 | `pageSize` | `number` | `10` | **Deprecated**: Use `pagination.pageSize` instead |
+| `sortConfig` | `SortConfig<T> \| null` | `null` | Current sort configuration |
+| `onSortChange` | `(sortConfig: SortConfig<T> \| null) => void` | - | Sort change callback |
 
 ### OverseaColumnConfig
 
@@ -106,7 +115,8 @@ function MyComponent() {
 | `width` | `number \| string` | - | Column width |
 | `align` | `'left' \| 'center' \| 'right'` | `'left'` | Text alignment |
 | `render` | `(value: unknown, record: T, index: number) => React.ReactNode` | - | Custom render function |
-| `sorter` | `boolean` | - | Enable sorting (future feature) |
+| `sorter` | `boolean \| ((a: T, b: T) => number)` | `false` | Enable sorting or custom sort function |
+| `sortCycle` | `'default' \| 'loop'` | `'default'` | Sorting behavior mode |
 | `fixed` | `'left' \| 'right'` | - | Fixed column position (future feature) |
 
 ### PaginationProps
@@ -120,6 +130,43 @@ function MyComponent() {
 | `boundaries` | `number` | `1` | Number of boundary pages |
 | `onChange` | `(page: number) => void` | - | Page change callback |
 
+## Sorting
+
+The component supports advanced sorting with two modes:
+
+### Default Sorting Mode (`sortCycle: 'default'`)
+- **Behavior**: `No Sort → Ascending → Descending → No Sort`
+- **Use Case**: Standard sorting where users can clear the sort
+- **Example**: Most data columns where clearing sort is beneficial
+
+### Loop Sorting Mode (`sortCycle: 'loop'`)
+- **Behavior**: `Ascending → Descending → Ascending → Descending`
+- **Use Case**: Columns that should always maintain some sort order
+- **Example**: Status columns, priority columns, or key metrics
+
+```tsx
+const columns = [
+  {
+    key: 'name',
+    title: 'Name',
+    sorter: true,
+    sortCycle: 'default', // Can clear sorting
+  },
+  {
+    key: 'priority',
+    title: 'Priority',
+    sorter: true,
+    sortCycle: 'loop', // Always sorted
+  },
+  {
+    key: 'price',
+    title: 'Price',
+    sorter: (a, b) => a.price - b.price, // Custom sort function
+    sortCycle: 'default',
+  },
+];
+```
+
 ## Architecture
 
 The component is built with a modular architecture:
@@ -130,6 +177,7 @@ components/OverseaTable/
 ├── types.ts            # TypeScript type definitions
 ├── utils.ts            # Utility functions
 ├── usePagination.ts    # Pagination hook
+├── useSorting.ts       # Sorting hook
 ├── TableHeader.tsx     # Header component
 ├── TableBody.tsx       # Body component
 ├── TablePagination.tsx # Pagination component
@@ -199,6 +247,22 @@ const [loading, setLoading] = useState(false);
   columns={columns}
   dataSource={data}
   loading={loading}
+/>
+```
+
+### Sorting with Initial State
+
+```tsx
+const [sortConfig, setSortConfig] = useState({
+  key: 'price',
+  order: 'desc'
+});
+
+<OverseaTable
+  columns={columns}
+  dataSource={data}
+  sortConfig={sortConfig}
+  onSortChange={setSortConfig}
 />
 ```
 

@@ -6,6 +6,7 @@ import {
 } from '@tanstack/react-table';
 import { OverseaTableProps } from './types';
 import { usePagination } from './usePagination';
+import { useSorting } from './useSorting';
 import { TableHeader } from './TableHeader';
 import { TableBody } from './TableBody';
 import { TablePagination } from './TablePagination';
@@ -22,14 +23,22 @@ export function OverseaTable<T extends Record<string, unknown>>({
   className = '',
   pagination,
   pageSize = 10,
+  sortConfig,
+  onSortChange,
 }: OverseaTableProps<T>) {
+  const { sortedData } = useSorting({
+    dataSource,
+    sortConfig,
+    columns,
+  });
+
   const {
     currentPage,
     paginatedData,
     totalPages,
     handlePageChange,
   } = usePagination({
-    dataSource,
+    dataSource: sortedData,
     pagination,
     pageSize,
   });
@@ -75,6 +84,8 @@ export function OverseaTable<T extends Record<string, unknown>>({
             columns={columns}
             bordered={bordered}
             size={size}
+            sortConfig={sortConfig}
+            onSortChange={onSortChange}
           />
           <TableBody
             rows={table.getRowModel().rows}
@@ -98,4 +109,4 @@ export function OverseaTable<T extends Record<string, unknown>>({
 }
 
 export default OverseaTable;
-export type { OverseaTableProps, OverseaColumnConfig, PaginationProps } from './types';
+export type { OverseaTableProps, OverseaColumnConfig, PaginationProps, SortConfig, SortOrder } from './types';

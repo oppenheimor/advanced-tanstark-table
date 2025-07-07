@@ -1,6 +1,6 @@
 import React from "react";
 import { Geist, Geist_Mono } from "next/font/google";
-import { OverseaTable, OverseaColumnConfig } from "@/components/OverseaTable/index";
+import { OverseaTable, OverseaColumnConfig, SortConfig } from "@/components/OverseaTable/index";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -78,6 +78,8 @@ const stockColumns: OverseaColumnConfig<StockData>[] = [
     title: 'Symbol',
     width: 80,
     align: 'left',
+    sorter: true,
+    sortCycle: 'loop',
     render: (value) => (
       <span className="font-mono font-semibold text-blue-600">
         {value as string}
@@ -89,6 +91,7 @@ const stockColumns: OverseaColumnConfig<StockData>[] = [
     title: 'Price',
     width: 100,
     align: 'right',
+    sorter: true,
     render: (value) => (
       <span className="font-mono">
         {(value as number).toFixed(2)}
@@ -100,6 +103,7 @@ const stockColumns: OverseaColumnConfig<StockData>[] = [
     title: 'Change%',
     width: 100,
     align: 'right',
+    sorter: true,
     render: (value) => {
       const changePercent = value as number;
       const isPositive = changePercent >= 0;
@@ -115,6 +119,8 @@ const stockColumns: OverseaColumnConfig<StockData>[] = [
     title: 'Volume',
     width: 100,
     align: 'right',
+    sorter: true,
+    sortCycle: 'loop',
     render: (value) => (
       <span className="font-mono">
         {(value as number).toFixed(2)}M
@@ -126,6 +132,7 @@ const stockColumns: OverseaColumnConfig<StockData>[] = [
     title: 'Rel Volume',
     width: 100,
     align: 'right',
+    sorter: true,
     render: (value) => (
       <span className="font-mono">
         {(value as number).toFixed(2)}
@@ -137,6 +144,7 @@ const stockColumns: OverseaColumnConfig<StockData>[] = [
     title: 'Market cap',
     width: 100,
     align: 'right',
+    sorter: true,
     render: (value) => (
       <span className="font-mono">
         {(value as number).toFixed(2)}T
@@ -148,6 +156,7 @@ const stockColumns: OverseaColumnConfig<StockData>[] = [
     title: 'P/E',
     width: 80,
     align: 'right',
+    sorter: true,
     render: (value) => (
       <span className="font-mono">
         {(value as number).toFixed(2)}
@@ -159,6 +168,7 @@ const stockColumns: OverseaColumnConfig<StockData>[] = [
     title: 'EPS dil',
     width: 80,
     align: 'right',
+    sorter: true,
     render: (value) => (
       <span className="font-mono">
         {(value as number).toFixed(2)}
@@ -170,6 +180,7 @@ const stockColumns: OverseaColumnConfig<StockData>[] = [
     title: 'EPS dil growth',
     width: 120,
     align: 'right',
+    sorter: true,
     render: (value) => {
       const growth = value as number;
       const isPositive = growth >= 0;
@@ -185,6 +196,7 @@ const stockColumns: OverseaColumnConfig<StockData>[] = [
     title: 'Div yield %',
     width: 100,
     align: 'right',
+    sorter: true,
     render: (value) => {
       const yield_ = value as number;
       const isPositive = yield_ >= 0;
@@ -209,7 +221,6 @@ const stockColumns: OverseaColumnConfig<StockData>[] = [
     key: 'analystRating',
     title: 'Analyst Rating',
     width: 120,
-    align: 'right',
     render: (value) => {
       const rating = value as string;
       const getColorClass = () => {
@@ -233,6 +244,10 @@ export default function Home() {
   const [paginationMode, setPaginationMode] = React.useState<'frontend' | 'backend'>('frontend');
   const [backendPage, setBackendPage] = React.useState(1);
   const [loading, setLoading] = React.useState(false);
+  const [sortConfig, setSortConfig] = React.useState<SortConfig<StockData> | null>({
+    key: 'marketCap',
+    order: 'desc'
+  });
   const backendPageSize = 10;
   
   const mockBackendData = React.useMemo(() => {
@@ -246,6 +261,10 @@ export default function Home() {
     await new Promise(resolve => setTimeout(resolve, 800));
     setBackendPage(page);
     setLoading(false);
+  };
+
+  const handleSortChange = (newSortConfig: SortConfig<StockData> | null) => {
+    setSortConfig(newSortConfig);
   };
   
   return (
@@ -315,6 +334,8 @@ export default function Home() {
               size="small"
               bordered={true}
               pageSize={10}
+              sortConfig={sortConfig}
+              onSortChange={handleSortChange}
               pagination={paginationMode === 'frontend' ? {
                 pageSize: 10,
                 siblings: 1,
